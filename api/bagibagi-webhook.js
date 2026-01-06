@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
         // ═══════════════════════════════════════════════════════
         
         // Uncomment this after confirming webhook works:
-        /*
+        
         const BAGIBAGI_TOKEN = process.env.BAGIBAGI_TOKEN;
         
         if (BAGIBAGI_TOKEN) {
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
             
             console.log('✅ Token verified');
         }
-        */
+        
         
         const donation = req.body;
         
