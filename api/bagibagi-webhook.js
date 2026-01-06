@@ -1,9 +1,10 @@
+// api/saweria-webhook.js
 const axios = require('axios');
 
 module.exports = async (req, res) => {
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Bagibagi-Token');
     
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -12,54 +13,32 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(200).json({ 
             status: 'OK',
-            message: 'BagiBagi webhook ready! 🎁',
-            endpoint: '/api/bagibagi-webhook'
+            message: 'Saweria webhook endpoint ready!' 
         });
     }
     
     try {
-        const BAGIBAGI_TOKEN = process.env.BAGIBAGI_TOKEN;
-        
-        if (BAGIBAGI_TOKEN) {
-            const receivedToken = req.headers['x-bagibagi-token'] || req.body.token;
-            
-            if (!receivedToken) {
-                return res.status(401).json({ 
-                    success: false,
-                    error: 'Token missing'
-                });
-            }
-            
-            if (receivedToken !== BAGIBAGI_TOKEN) {
-                return res.status(403).json({ 
-                    success: false,
-                    error: 'Invalid token'
-                });
-            }
-        }
-        
         const donation = req.body;
         
         const donationData = {
-            donor_name: donation.supporter_name || donation.name || "Anonymous",
-            amount: parseInt(donation.amount) || 0,
-            message: donation.support_message || donation.message || "",
-            timestamp: Date.now(),
-            platform: 'bagibagi'
+            donor_name: donation.donatur_name || donation.donor_name || "Anonymous",
+            amount: parseInt(donation.amount_raw || donation.amount) || 0,
+            message: donation.message || "",
+            timestamp: Date.now()
         };
+        
+        console.log('Received donation:', donationData);
         
         const ROBLOX_API_KEY = process.env.ROBLOX_API_KEY;
         const UNIVERSE_ID = process.env.UNIVERSE_ID;
         
         if (!ROBLOX_API_KEY || !UNIVERSE_ID) {
-            return res.status(500).json({ 
-                success: false,
-                error: 'Missing env variables'
-            });
+            console.error('Missing env variables!');
+            return res.status(500).json({ error: 'Server configuration error' });
         }
         
         await axios.post(
-            `https://apis.roblox.com/messaging-service/v1/universes/${UNIVERSE_ID}/topics/BagiBagiDonation`,
+            `https://apis.roblox.com/messaging-service/v1/universes/${UNIVERSE_ID}/topics/SaweriaDonation`,
             { message: JSON.stringify(donationData) },
             {
                 headers: {
@@ -70,17 +49,19 @@ module.exports = async (req, res) => {
             }
         );
         
+        console.log('Sent to Roblox successfully!');
+        
         return res.status(200).json({ 
             success: true,
-            platform: 'bagibagi',
             donor: donationData.donor_name,
             amount: donationData.amount
         });
         
     } catch (error) {
+        console.error('Error:', error.message);
         return res.status(500).json({ 
             success: false,
-            error: error.message
+            error: error.message 
         });
     }
 };
